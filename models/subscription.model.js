@@ -6,8 +6,8 @@ const subscriptionSchema = new mongoose.Schema(
             type: String,
             required: [true, "Subscription name is required"],
             trim: true,
-            minLength: 2,
-            maxLength: 100,
+            minlength: 2,
+            maxlength: 100,
         },
         currency: {
             type: String,
@@ -47,15 +47,15 @@ const subscriptionSchema = new mongoose.Schema(
             type: Date,
             required: true,
             validate: {
-                validator: (value) => value < new Date(),
-                message: "Start date must be in the past",
+                validator: (value) => value <= new Date(),
+                message: "Start date must be in the past or today",
             },
         },
         renewalDate: {
             type: Date,
             validate: {
                 validator: function (value) {
-                    return value > this.startDate;
+                    return !value || value > this.startDate;
                 },
                 message: "Renewal date must be after the start date",
             },
@@ -63,6 +63,7 @@ const subscriptionSchema = new mongoose.Schema(
         user: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
+            required: true,
             index: true,
         },
     },
@@ -77,14 +78,12 @@ subscriptionSchema.pre("save", function (next) {
         yearly: 365,
     };
 
-    // Set renewalDate if not provided
     if (!this.renewalDate) {
         this.renewalDate = new Date(this.startDate);
         this.renewalDate.setDate(this.renewalDate.getDate() + renewalPeriods[this.frequency]);
     }
 
-    // Set status to 'expired' if renewalDate is in the past
-    if (this.renewalDate < new Date()) {
+    if (this.renewalDate <= new Date()) {
         this.status = "expired";
     }
 

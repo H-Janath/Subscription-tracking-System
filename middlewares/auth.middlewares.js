@@ -23,7 +23,6 @@ const authorized = async (req, res, next) => {
         if (!user) {
             return res.status(401).json({ message: "Unauthorized: User not found" });
         }
-
         // Attach user to request object
         req.user = user;
         next();
